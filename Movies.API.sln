@@ -17,7 +17,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{068AFF3B
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Movies.API.Infrastructure.Tests", "Movies.API.Infrastructure.Tests\Movies.API.Infrastructure.Tests.csproj", "{BF6235E2-3977-4EED-BD9E-2A8F028E77B8}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Movies.API.Tests", "Movies.API.Tests\Movies.API.Tests.csproj", "{FBBF7D04-5874-4E47-B386-70389DFB5215}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Movies.API.Tests", "Movies.API.Tests\Movies.API.Tests.csproj", "{FBBF7D04-5874-4E47-B386-70389DFB5215}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

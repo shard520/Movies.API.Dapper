@@ -2,27 +2,21 @@
 using Microsoft.Extensions.Configuration;
 using Movies.API.Application.Interfaces;
 using Movies.API.Core.Entities;
-using System;
-using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Movies.API.Infrastructure.Repositories
 {
     public class MovieRepository : IMovieRepository
     {
-        private readonly IRepositoryConnection _repositoryConnection;
         private readonly IConfiguration _configuration;
 
-        public MovieRepository(IConfiguration configuration, IRepositoryConnection repositoryConnection)
+        public MovieRepository(IConfiguration configuration)
         {
             _configuration = configuration;
-            _repositoryConnection = repositoryConnection;
         }
-        protected virtual IDbConnection GetConnection()
+
+        private IDbConnection GetConnection()
         {
             return new SqlConnection(_configuration
                 .GetConnectionString("DefaultConnection"));
@@ -32,33 +26,61 @@ namespace Movies.API.Infrastructure.Repositories
         {
             movie.CreatedDate = DateTimeOffset.Now;
             var sql = "INSERT INTO Movies(Name,YearOfRelease,Rating,CreatedDate) VALUES (@Name,@YearOfRelease,@Rating,@CreatedDate)";
-            using (var dbConnection = GetConnection())
+            using (var connection = GetConnection())
             {
-                dbConnection.Open();
-                return await _repositoryConnection.ExecuteAsync(
-                    dbConnection, sql, movie);
+                connection.Open();
+                return await connection.ExecuteAsync(sql, movie);
             }
         }
 
         public async Task<int> DeleteAsync(int id)
         {
             var sql = "DELETE FROM Movies WHERE Id = @Id";
-            using (var dbConnection = GetConnection())
+            using (var connection = GetConnection())
             {
-                dbConnection.Open();
-                return await _repositoryConnection.ExecuteAsync(
-                    dbConnection, sql, new { Id = id });
+                connection.Open();
+                return await connection.ExecuteAsync(sql, new { Id = id });
             }
         }
 
         public async Task<IReadOnlyList<Movie>> GetAllAsync()
         {
-            var sql = "SELECT * FROM Movies";
-            using (var dbConnection = GetConnection())
+            var sql = @"SELECT [m].[Id], 
+	                        [m].[CreatedDate], 
+	                        [m].[Name], 
+	                        [m].[Rating], 
+	                        [m].[UpdatedDate], 
+	                        [m].[YearOfRelease], 
+	                        [t].[ActorId], 
+	                        [t].[MovieId], 
+	                        [t].[Id], 
+	                        [t].[CreatedDate], 
+	                        [t].[Name], 
+	                        [t].[UpdatedDate]
+                        FROM [MoviesDb].[dbo].Movies AS [m]
+                        LEFT JOIN (
+	                        SELECT [m0].[ActorId], [m0].[MovieId], [a].[Id], [a].[CreatedDate], [a].[Name], [a].[UpdatedDate]
+                            FROM [MoviesDb].[dbo].[MovieActors] AS [m0]
+                            INNER JOIN [MoviesDb].[dbo].[Actors] AS [a] ON [m0].[ActorId] = [a].[Id]
+                            ) 
+                        AS [t] ON [m].[Id] = [t].[MovieId]
+                        ORDER BY [m].[Id], [t].[ActorId], [t].[MovieId]";
+            using (var connection = GetConnection())
             {
-                dbConnection.Open();
-                var result = await _repositoryConnection.QueryAsync<Movie>(
-                    dbConnection, sql);
+                connection.Open();
+                var movies = await connection.QueryAsync<Movie, Actor, Movie>(
+                    sql,
+                    (movie, actor) => {
+                        movie.Actors.Add(actor);
+                        return movie;
+                    }, 
+                    splitOn: "ActorId");
+                var result = movies.GroupBy(m => m.Id).Select(x =>
+                {
+                    var groupedMovie = x.First();
+                    groupedMovie.Actors = x.Select(y => y.Actors.Single()).ToList();
+                    return groupedMovie;
+                });
                 return result.ToList();
             }
         }
@@ -66,24 +88,22 @@ namespace Movies.API.Infrastructure.Repositories
         public async Task<Movie> GetByIdAsync(int id)
         {
             var sql = "SELECT * FROM Movies WHERE Id = @Id";
-            using (var dbConnection = GetConnection())
+            using (var connection = GetConnection())
             {
-                dbConnection.Open();
-                return await _repositoryConnection
-                    .QuerySingleOrDefaultAsync<Movie>(
-                    dbConnection, sql, id);
+                connection.Open();
+                return await connection.QuerySingleOrDefaultAsync<Movie>(
+                    sql, new { Id = id});
             }
         }
 
-        public async Task<int> UpdateAsync(Movie entity)
+        public async Task<int> UpdateAsync(Movie movie)
         {
-            entity.UpdatedDate = DateTimeOffset.Now;
+            movie.UpdatedDate = DateTimeOffset.Now;
             var sql = "UPDATE Movies SET Name = @Name, YearOfRelease = @YearOfRelease, Rating = @Rating, UpdatedDate = @UpdatedDate WHERE Id = @Id";
-            using (var dbConnection = GetConnection())
+            using (var connection = GetConnection())
             {
-                dbConnection.Open();
-                return await _repositoryConnection.ExecuteAsync(
-                    dbConnection, sql, entity);
+                connection.Open();
+                return await connection.ExecuteAsync(sql, movie);
             }
         }
     }

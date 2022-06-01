@@ -10,7 +10,6 @@ namespace Movies.API.Infrastructure
         {
             services.AddTransient<IMovieRepository, MovieRepository>();
             services.AddTransient<IUnitOfWork, UnitOfWork>();
-            services.AddTransient<IRepositoryConnection, RepositoryConnection>();
         }
     }
 }
