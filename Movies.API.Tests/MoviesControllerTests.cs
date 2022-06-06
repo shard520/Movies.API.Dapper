@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Moq;
 using Movies.API.Application.Interfaces;
 using Movies.API.Controllers;
+using Movies.API.Core.DTOs;
 using Movies.API.Core.Entities;
 
 namespace Movies.API.Tests
@@ -22,9 +23,9 @@ namespace Movies.API.Tests
         public async Task When_GetAll_Then_ReturnOkResponseWithListOfMovies()
         {
             // Arrange
-            var movie1 = It.IsAny<Movie>();
-            var movie2 = It.IsAny<Movie>();
-            var expectedResult = new List<Movie>()
+            var movie1 = It.IsAny<MovieDTO>();
+            var movie2 = It.IsAny<MovieDTO>();
+            var expectedResult = new List<MovieDTO>()
             {
                 movie1, movie2
             };
@@ -45,7 +46,7 @@ namespace Movies.API.Tests
         {
             // Arrange
             var id = It.IsAny<int>();
-            var expectedResult = Mock.Of<Movie>();
+            var expectedResult = Mock.Of<MovieDTO>();
             _unitOfWork.Setup(x => x.Movies.GetByIdAsync(id))
                 .ReturnsAsync(expectedResult);
 
@@ -64,7 +65,7 @@ namespace Movies.API.Tests
             // Arrange
             var invalidId = It.IsAny<int>();
             _unitOfWork.Setup(x => x.Movies.GetByIdAsync(invalidId))
-                .ReturnsAsync(null as Movie);
+                .ReturnsAsync(null as MovieDTO);
 
             // Act
             var subject = await _controller.GetById(invalidId);
@@ -79,13 +80,13 @@ namespace Movies.API.Tests
         public async Task When_Add_Then_ReturnOkResponseWithInt1()
         {
             // Arrange
-            var movie = It.IsAny<Movie>();
+            var movieDTO = It.IsAny<MovieDTO>();
             var expectedResult = 1;
-            _unitOfWork.Setup(x => x.Movies.AddAsync(movie))
+            _unitOfWork.Setup(x => x.Movies.AddAsync(movieDTO))
                 .ReturnsAsync(expectedResult);
 
             // Act
-            var subject = await _controller.Add(movie);
+            var subject = await _controller.Add(movieDTO);
             var okResult = subject as OkObjectResult;
 
             // Assert
@@ -116,12 +117,13 @@ namespace Movies.API.Tests
         {
             // Arrange
             var movie = It.IsAny<Movie>();
+            var movieDTO = It.IsAny<MovieDTO>();
             var expectedResult = 1;
-            _unitOfWork.Setup(x => x.Movies.UpdateAsync(movie))
+            _unitOfWork.Setup(x => x.Movies.UpdateAsync(movieDTO))
                 .ReturnsAsync(expectedResult);
 
             // Act
-            var subject = await _controller.Update(movie);
+            var subject = await _controller.Update(movieDTO);
             var okResult = subject as OkObjectResult;
 
             // Assert

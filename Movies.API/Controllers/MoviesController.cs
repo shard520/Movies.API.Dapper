@@ -1,6 +1,8 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Movies.API.Application.Interfaces;
+using Movies.API.Core.DTOs;
 using Movies.API.Core.Entities;
+using Serilog;
 
 namespace Movies.API.Controllers
 {
@@ -27,15 +29,16 @@ namespace Movies.API.Controllers
             var data = await _unitOfWork.Movies.GetByIdAsync(id);
             if (data == null)
             {
+                Log.Information("Movie with id {id} not found.", id);
                 return NotFound();
             }
             return Ok(data);
         }
 
         [HttpPost]
-        public async Task<IActionResult> Add(Movie movie)
+        public async Task<IActionResult> Add(MovieDTO movieDTO)
         {
-            var data = await _unitOfWork.Movies.AddAsync(movie);
+            var data = await _unitOfWork.Movies.AddAsync(movieDTO);
             return Ok(data);
         }
 
@@ -47,9 +50,9 @@ namespace Movies.API.Controllers
         }
 
         [HttpPut]
-        public async Task<IActionResult> Update(Movie movie)
+        public async Task<IActionResult> Update(MovieDTO movieDTO)
         {
-            var data = await _unitOfWork.Movies.UpdateAsync(movie);
+            var data = await _unitOfWork.Movies.UpdateAsync(movieDTO);
             return Ok(data);
         }
     }
