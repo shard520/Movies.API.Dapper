@@ -3,23 +3,23 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.2.32505.173
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Movies.API", "Movies.API\Movies.API.csproj", "{F1708E78-8BF3-42E7-A401-96BE4F8423F0}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Movies.API", "src\Movies.API\Movies.API.csproj", "{F1708E78-8BF3-42E7-A401-96BE4F8423F0}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Movies.API.Core", "Movies.API.Core\Movies.API.Core.csproj", "{37C3D776-8FAE-4CB8-81DF-6A08B7835E48}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Movies.API.Core", "src\Movies.API.Core\Movies.API.Core.csproj", "{37C3D776-8FAE-4CB8-81DF-6A08B7835E48}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Movies.API.Application", "Movies.API.Application\Movies.API.Application.csproj", "{1E01392E-30CE-4708-B7E8-4A16378D9BA5}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Movies.API.Application", "src\Movies.API.Application\Movies.API.Application.csproj", "{1E01392E-30CE-4708-B7E8-4A16378D9BA5}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Movies.API.Infrastructure", "Movies.API.Infrastructure\Movies.API.Infrastructure.csproj", "{6292FEF2-9545-49BD-B4A4-8EFEF35BC5AF}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Movies.API.Infrastructure", "src\Movies.API.Infrastructure\Movies.API.Infrastructure.csproj", "{6292FEF2-9545-49BD-B4A4-8EFEF35BC5AF}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{2C805486-76C9-4864-A4F8-92B15476F52D}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{068AFF3B-ED88-4E98-867D-6F7A3B2051BC}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Movies.API.Infrastructure.Tests", "Movies.API.Infrastructure.Tests\Movies.API.Infrastructure.Tests.csproj", "{BF6235E2-3977-4EED-BD9E-2A8F028E77B8}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Movies.API.Infrastructure.Tests", "tests\Movies.API.Infrastructure.Tests\Movies.API.Infrastructure.Tests.csproj", "{BF6235E2-3977-4EED-BD9E-2A8F028E77B8}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Movies.API.Tests", "Movies.API.Tests\Movies.API.Tests.csproj", "{FBBF7D04-5874-4E47-B386-70389DFB5215}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Movies.API.Tests", "tests\Movies.API.Tests\Movies.API.Tests.csproj", "{FBBF7D04-5874-4E47-B386-70389DFB5215}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Movies.API.Core.Tests", "Movies.API.Core.Tests\Movies.API.Core.Tests.csproj", "{4550CFF0-6179-45FA-8817-D1B849859C8A}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Movies.API.Core.Tests", "tests\Movies.API.Core.Tests\Movies.API.Core.Tests.csproj", "{4550CFF0-6179-45FA-8817-D1B849859C8A}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{DBB90918-3849-427F-AB0C-8A90325D1E52}"
 	ProjectSection(SolutionItems) = preProject

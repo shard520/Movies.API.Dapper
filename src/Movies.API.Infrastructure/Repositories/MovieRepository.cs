@@ -49,36 +49,18 @@ namespace Movies.API.Infrastructure.Repositories
 
         public async Task<IReadOnlyList<MovieDTO>> GetAllAsync()
         {
-            var sql = @"SELECT [m].[Id], 
-	                        [m].[CreatedDate], 
-	                        [m].[Name], 
-                            [m].[Rating], 
-	                        [m].[UpdatedDate], 
-	                        [m].[YearOfRelease], 
-	                        [t].[ActorId], 
-	                        [t].[MovieId], 
-	                        [t].[Id], 
-	                        [t].[CreatedDate], 
-	                        [t].[Name], 
-	                        [t].[UpdatedDate]
-                        FROM [MoviesDb].[dbo].Movies AS [m]
-                        LEFT JOIN (
-	                        SELECT [m0].[ActorId], [m0].[MovieId], [a].[Id], [a].[CreatedDate], [a].[Name], [a].[UpdatedDate]
-                            FROM [MoviesDb].[dbo].[MovieActors] AS [m0]
-                            INNER JOIN [MoviesDb].[dbo].[Actors] AS [a] ON [m0].[ActorId] = [a].[Id]
-                            ) 
-                        AS [t] ON [m].[Id] = [t].[MovieId]
-                        ORDER BY [m].[Id], [t].[ActorId], [t].[MovieId]";
+            var procedure = "[dbo].[GetMoviesWithActors]";
             using (var connection = GetConnection())
             {
                 connection.Open();
                 var movies = await connection.QueryAsync<Movie, Actor, Movie>(
-                    sql,
+                    procedure,
                     (movie, actor) => {
                         movie.Actors.Add(actor);
                         return movie;
                     }, 
-                    splitOn: "ActorId");
+                    splitOn: "ActorId",
+                    commandType: CommandType.StoredProcedure);
                 var groupedMovies = movies.GroupBy(m => m.Id).Select(x =>
                 {
                     var groupedMovie = x.First();
@@ -98,26 +80,7 @@ namespace Movies.API.Infrastructure.Repositories
 
         public async Task<MovieDTO> GetByIdAsync(int id)
         {
-            var sql = @"SELECT [m].[Id], 
-	                        [m].[CreatedDate], 
-	                        [m].[Name], 
-	                        [m].[Rating], 
-	                        [m].[UpdatedDate], 
-	                        [m].[YearOfRelease], 
-	                        [t].[ActorId], 
-	                        [t].[MovieId], 
-	                        [t].[Id], 
-	                        [t].[CreatedDate], 
-	                        [t].[Name], 
-	                        [t].[UpdatedDate]
-                        FROM [MoviesDb].[dbo].Movies AS [m]
-                        LEFT JOIN (
-	                        SELECT [m0].[ActorId], [m0].[MovieId], [a].[Id], [a].[CreatedDate], [a].[Name], [a].[UpdatedDate]
-                            FROM [MoviesDb].[dbo].[MovieActors] AS [m0]
-                            INNER JOIN [MoviesDb].[dbo].[Actors] AS [a] ON [m0].[ActorId] = [a].[Id]
-                            ) 
-                        AS [t] ON [m].[Id] = [t].[MovieId]
-                        WHERE m.Id = @Id";
+            var procedure = "[dbo].[GetMovieByIdWithActors]";
 
             try
             {
@@ -125,7 +88,7 @@ namespace Movies.API.Infrastructure.Repositories
                 {
                     connection.Open();
                     var movies = await connection.QueryAsync<Movie, Actor, Movie>(
-                        sql,
+                        procedure,
                         (movie, actor) =>
                         {
                             movie.Actors = new List<Actor>()
@@ -135,7 +98,8 @@ namespace Movies.API.Infrastructure.Repositories
                             return movie;
                         },
                         new { Id = id },
-                        splitOn: "ActorId");
+                        splitOn: "ActorId", 
+                        commandType: CommandType.StoredProcedure);
                     var result = movies.GroupBy(m => m.Id).Select(x =>
                     {
                         var groupedMovie = x.First();
