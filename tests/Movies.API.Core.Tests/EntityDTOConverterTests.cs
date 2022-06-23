@@ -38,5 +38,18 @@ namespace Movies.API.Core.Tests
             // Assert
             result.Should().BeOfType<Movie>();
         }
+
+        [Test]
+        public void When_GivenAnActorDTO_Then_ReturnActor()
+        {
+            // Arrange
+            var actorDTO = Mock.Of<ActorDTO>();
+
+            // Act
+            var result = EntityDTOConverter.ActorDTOToActor(actorDTO);
+
+            // Assert
+            result.Should().BeOfType<Actor>();
+        }
     }
 }

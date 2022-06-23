@@ -16,6 +16,21 @@ namespace Movies.API.Controllers
             _unitOfWork = unitOfWork;
         }
 
+        [HttpPost]
+        public async Task<IActionResult> Add(MovieDTO movieDTO)
+        {
+            try
+            {
+                var data = await _unitOfWork.Movies.AddAsync(movieDTO);
+                return Ok(data);
+            }
+            catch (Exception ex)
+            {
+                return Conflict($"A movie with the name \"{movieDTO.MovieName}\" already exists with an id of {ex.Message}. Please update the existing movie.");
+                throw;
+            }
+        }
+
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
@@ -30,22 +45,8 @@ namespace Movies.API.Controllers
             if (data == null)
             {
                 Log.Information("Movie with id {id} not found.", id);
-                return NotFound();
+                return NotFound($"Movie with id {id} not found.");
             }
-            return Ok(data);
-        }
-
-        [HttpPost]
-        public async Task<IActionResult> Add(MovieDTO movieDTO)
-        {
-            var data = await _unitOfWork.Movies.AddAsync(movieDTO);
-            return Ok(data);
-        }
-
-        [HttpDelete]
-        public async Task<IActionResult> Delete(int id)
-        {
-            var data = await _unitOfWork.Movies.DeleteAsync(id);
             return Ok(data);
         }
 
@@ -53,6 +54,23 @@ namespace Movies.API.Controllers
         public async Task<IActionResult> Update(MovieDTO movieDTO)
         {
             var data = await _unitOfWork.Movies.UpdateAsync(movieDTO);
+            if (data == null)
+            {
+                Log.Information("Update operation was unsuccesful, tried to update a movie with id: {id}", movieDTO.Id);
+                return NotFound("Update operation was unsuccesful, please check the id supplied is valid.");
+            }
+            return Ok(data);
+        }
+
+        [HttpDelete]
+        public async Task<IActionResult> Delete(int id)
+        {
+            var data = await _unitOfWork.Movies.DeleteAsync(id);
+            if (data == 0)
+            {
+                Log.Information("Delete operation was unsuccesful, tried to delete a movie with id: {id}", id);
+                return NotFound("Delete operation was unsuccesful, please check the id supplied is valid.");
+            }
             return Ok(data);
         }
     }

@@ -6,7 +6,7 @@ namespace Movies.API.Core.Entities
     public class Movie : BaseEntity
     {
         public int Id { get; set; }
-        public string Name { get; set; } = null!;
+        public string MovieName { get; set; } = null!;
         public decimal? Rating { get; set; }
         public int? YearOfRelease { get; set; }
 

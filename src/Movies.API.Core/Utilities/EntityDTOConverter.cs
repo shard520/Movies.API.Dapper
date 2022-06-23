@@ -14,7 +14,7 @@ namespace Movies.API.Core.Utilities
                 var actor = new ActorDTO()
                 {
                     Id = entry.Id,
-                    Name = entry.Name
+                    ActorName = entry.ActorName
                 };
                 actors.Add(actor);
             }
@@ -22,7 +22,7 @@ namespace Movies.API.Core.Utilities
             return new MovieDTO()
             {
                 Id = movie.Id,
-                Name = movie.Name,
+                MovieName = movie.MovieName,
                 Rating = movie.Rating,
                 YearOfRelease = movie.YearOfRelease,
                 Actors = actors
@@ -38,17 +38,39 @@ namespace Movies.API.Core.Utilities
                 var actor = new Actor()
                 {
                     Id = entry.Id,
-                    Name = entry.Name
+                    ActorName = entry.ActorName
                 };
                 actors.Add(actor);
             }
             return new Movie()
             {
                 Id = movieDTO.Id,
-                Name = movieDTO.Name,
+                MovieName = movieDTO.MovieName,
                 Rating = movieDTO.Rating,
                 YearOfRelease = movieDTO.YearOfRelease,
                 Actors = actors
+            };
+        }
+
+        public static Actor ActorDTOToActor(ActorDTO actorDTO)
+        {
+            var movies = new List<Movie>();
+
+            foreach (var entry in actorDTO.Movies)
+            {
+                var movie = new Movie()
+                {
+                    Id = entry.Id,
+                    MovieName = entry.MovieName,
+                    Rating = entry.Rating,
+                    YearOfRelease = entry.YearOfRelease
+                };
+                movies.Add(movie);
+            }
+            return new Actor()
+            {
+                Id = actorDTO.Id,
+                ActorName = actorDTO.ActorName
             };
         }
     }

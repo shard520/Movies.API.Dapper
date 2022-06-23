@@ -4,7 +4,6 @@ using Moq;
 using Movies.API.Application.Interfaces;
 using Movies.API.Controllers;
 using Movies.API.Core.DTOs;
-using Movies.API.Core.Entities;
 
 namespace Movies.API.Tests
 {
@@ -69,10 +68,10 @@ namespace Movies.API.Tests
 
             // Act
             var subject = await _controller.GetById(invalidId);
-            var result = subject as NotFoundResult;
-
+            var result = subject as NotFoundObjectResult;
+            
             // Assert
-            subject.Should().BeOfType<NotFoundResult>();
+            result.Should().BeOfType<NotFoundObjectResult>();
             result.StatusCode.Should().Be(404);
         }
 
@@ -113,12 +112,11 @@ namespace Movies.API.Tests
         }
 
         [Test]
-        public async Task When_Update_Then_ReturnOkResponseWithInt1()
+        public async Task When_Update_Then_ReturnOkResponseWithUpdatedMovie()
         {
             // Arrange
-            var movie = It.IsAny<Movie>();
-            var movieDTO = It.IsAny<MovieDTO>();
-            var expectedResult = 1;
+            var movieDTO = Mock.Of<MovieDTO>();
+            var expectedResult = movieDTO;
             _unitOfWork.Setup(x => x.Movies.UpdateAsync(movieDTO))
                 .ReturnsAsync(expectedResult);
 

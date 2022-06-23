@@ -27,23 +27,53 @@ namespace Movies.API.Infrastructure.Repositories
 
         public async Task<int> AddAsync(MovieDTO movieDTO)
         {
-            var movie = EntityDTOConverter.MovieDTOToMovie(movieDTO);
-            movie.CreatedDate = DateTimeOffset.Now;
-            var sql = "INSERT INTO Movies(Name,YearOfRelease,Rating,CreatedDate) VALUES (@Name,@YearOfRelease,@Rating,@CreatedDate)";
-            using (var connection = GetConnection())
+            try
             {
-                connection.Open();
-                return await connection.ExecuteAsync(sql, movie);
-            }
-        }
+                using (var connection = GetConnection())
+                {
+                    connection.Open();
+                    await CheckForExistingMovie(movieDTO, connection);
 
-        public async Task<int> DeleteAsync(int id)
-        {
-            var sql = "DELETE FROM Movies WHERE Id = @Id";
-            using (var connection = GetConnection())
+                    using (var transaction = connection.BeginTransaction())
+                    {
+                        var movieId = await InsertAndGetId(
+                            new
+                            {
+                                movieDTO.MovieName,
+                                movieDTO.YearOfRelease,
+                                movieDTO.Rating
+                            },
+                            "[dbo].[InsertMovie]",
+                            connection,
+                            transaction
+                            );
+
+                        foreach (var actor in movieDTO.Actors)
+                        {
+                            var actorId = await InsertAndGetId(
+                                new { actor.ActorName },
+                                "[dbo].[InsertActor]",
+                                connection,
+                                transaction
+                                );
+
+                            await connection.ExecuteAsync(
+                                "[dbo].[InsertMovieActor]",
+                                new { MovieId = movieId, ActorId = actorId },
+                                transaction,
+                                commandType: CommandType.StoredProcedure
+                                );
+                        }
+
+                        transaction.Commit();
+                        return movieId;
+                    }
+                }
+            }
+            catch (Exception ex)
             {
-                connection.Open();
-                return await connection.ExecuteAsync(sql, new { Id = id });
+                Log.Error(ex.Message);
+                throw;
             }
         }
 
@@ -55,10 +85,11 @@ namespace Movies.API.Infrastructure.Repositories
                 connection.Open();
                 var movies = await connection.QueryAsync<Movie, Actor, Movie>(
                     procedure,
-                    (movie, actor) => {
+                    (movie, actor) =>
+                    {
                         movie.Actors.Add(actor);
                         return movie;
-                    }, 
+                    },
                     splitOn: "ActorId",
                     commandType: CommandType.StoredProcedure);
                 var groupedMovies = movies.GroupBy(m => m.Id).Select(x =>
@@ -69,7 +100,7 @@ namespace Movies.API.Infrastructure.Repositories
                 });
 
                 var result = new List<MovieDTO>();
-                foreach(var movie in groupedMovies)
+                foreach (var movie in groupedMovies)
                 {
                     result.Add(EntityDTOConverter.MovieToMovieDTO(movie));
                 }
@@ -78,7 +109,7 @@ namespace Movies.API.Infrastructure.Repositories
             }
         }
 
-        public async Task<MovieDTO> GetByIdAsync(int id)
+        public async Task<MovieDTO?> GetByIdAsync(int id)
         {
             var procedure = "[dbo].[GetMovieByIdWithActors]";
 
@@ -98,40 +129,143 @@ namespace Movies.API.Infrastructure.Repositories
                             return movie;
                         },
                         new { Id = id },
-                        splitOn: "ActorId", 
+                        splitOn: "ActorId",
                         commandType: CommandType.StoredProcedure);
                     var result = movies.GroupBy(m => m.Id).Select(x =>
                     {
                         var groupedMovie = x.First();
                         groupedMovie.Actors = x.Select(y => y.Actors.Single()).ToList();
                         return groupedMovie;
-                    }).ToList<Movie>();
+                    }).ToList<Movie>().First<Movie>();
 
-                    return EntityDTOConverter.MovieToMovieDTO(result[0]);
+                    return EntityDTOConverter.MovieToMovieDTO(result);
                 }
             }
             catch (Exception ex)
             {
                 Log.Error(ex.Message);
-                if(ex.Message.Contains("Index was out of range."))
+                if (ex.Message.Contains("Sequence contains no elements"))
                 {
                     return null;
                 }
                 throw;
             }
-
-            
         }
 
-        public async Task<int> UpdateAsync(MovieDTO movieDTO)
+        public async Task<MovieDTO?> UpdateAsync(MovieDTO movieDTO)
         {
             var movie = EntityDTOConverter.MovieDTOToMovie(movieDTO);
-            movie.UpdatedDate = DateTimeOffset.Now;
-            var sql = "UPDATE Movies SET Name = @Name, YearOfRelease = @YearOfRelease, Rating = @Rating, UpdatedDate = @UpdatedDate WHERE Id = @Id";
-            using (var connection = GetConnection())
+
+            try
             {
-                connection.Open();
-                return await connection.ExecuteAsync(sql, movie);
+                using (var connection = GetConnection())
+                {
+                    connection.Open();
+
+                    using (var transaction = connection.BeginTransaction())
+                    {
+                        foreach (var actor in movieDTO.Actors)
+                        {
+                            var actorId = await InsertAndGetId(
+                                new { actor.ActorName },
+                                "[dbo].[InsertActor]",
+                                connection,
+                                transaction
+                                );
+
+                            await connection.ExecuteAsync(
+                                "[dbo].[InsertMovieActor]",
+                                new { MovieId = movieDTO.Id, ActorId = actorId },
+                                transaction,
+                                commandType: CommandType.StoredProcedure
+                                );
+                        }
+
+                        transaction.Commit();
+                    }
+
+
+                    var movies = await connection.QueryAsync<Movie, Actor, Movie>(
+                        "[dbo].[UpdateMovie]",
+                        (movie, actor) =>
+                        {
+                            movie.Actors = new List<Actor>()
+                            {
+                            actor
+                            };
+                            return movie;
+                        },
+                        new { movieDTO.Id, movieDTO.MovieName, movieDTO.YearOfRelease, movieDTO.Rating },
+                        splitOn: "ActorId",
+                        commandType: CommandType.StoredProcedure);
+                    var result = movies.GroupBy(m => m.Id).Select(x =>
+                    {
+                        var groupedMovie = x.First();
+                        groupedMovie.Actors = x.Select(y => y.Actors.Single()).ToList();
+                        return groupedMovie;
+                    }).First<Movie>();
+
+                    return EntityDTOConverter.MovieToMovieDTO(result);
+                }
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex.Message);
+                if (ex.Message.Contains("The MERGE statement conflicted with the FOREIGN KEY constraint"))
+                {
+                    return null;
+                }
+                throw;
+            }
+        }
+
+        public async Task<int> DeleteAsync(int id)
+        {
+            try
+            {
+                using (var connection = GetConnection())
+                {
+                    connection.Open();
+                    var queryParam = new DynamicParameters(new { Id = id });
+                    queryParam.Add("@rval", dbType: DbType.Int32, direction: ParameterDirection.ReturnValue);
+
+                    await connection.ExecuteAsync("DeleteMovieAndMovieActors", queryParam, commandType: CommandType.StoredProcedure);
+                    return queryParam.Get<int>("@rval");
+                }
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex.Message);
+                throw;
+            }
+        }
+
+        private static async Task<int> InsertAndGetId(object rowValues, string procedureName, IDbConnection connection, IDbTransaction transaction)
+        {
+            var queryParam = new DynamicParameters(rowValues);
+            queryParam.Add("@rval", dbType: DbType.Int32, direction: ParameterDirection.ReturnValue);
+
+            await connection.ExecuteScalarAsync<int>(
+                procedureName,
+                queryParam,
+                transaction,
+                commandType: CommandType.StoredProcedure
+                );
+
+            return queryParam.Get<int>("@rval");
+        }
+
+        private static async Task CheckForExistingMovie(MovieDTO movieDTO, IDbConnection connection)
+        {
+            var queryParam = new DynamicParameters(new { movieDTO.MovieName });
+            queryParam.Add("@rval", dbType: DbType.Int32, direction: ParameterDirection.ReturnValue);
+
+            await connection.ExecuteAsync("GetMovieIdFromName", queryParam, commandType: CommandType.StoredProcedure);
+            int existingId = queryParam.Get<int>("@rval");
+            if (existingId != 0)
+            {
+                Log.Error("Movie with name \"{name}\" already exists, transaction aborted", movieDTO.MovieName);
+                throw new Exception($"{existingId}");
             }
         }
     }
