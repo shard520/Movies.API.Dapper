@@ -18,6 +18,8 @@ namespace Movies.API.Core.Tests
         {
             // Arrange
             var movie = Mock.Of<Movie>();
+            var actor = Mock.Of<Actor>();
+            movie.Actors.Add(actor);
 
             // Act
             var result = EntityDTOConverter.MovieToMovieDTO(movie);
@@ -31,6 +33,8 @@ namespace Movies.API.Core.Tests
         {
             // Arrange
             var movieDTO = Mock.Of<MovieDTO>();
+            var actorDTO = Mock.Of<ActorDTO>();
+            movieDTO.Actors.Add(actorDTO);
 
             // Act
             var result = EntityDTOConverter.MovieDTOToMovie(movieDTO);
@@ -44,6 +48,8 @@ namespace Movies.API.Core.Tests
         {
             // Arrange
             var actorDTO = Mock.Of<ActorDTO>();
+            var movieDTO = Mock.Of<MovieDTO>();
+            actorDTO.Movies.Add(movieDTO);
 
             // Act
             var result = EntityDTOConverter.ActorDTOToActor(actorDTO);

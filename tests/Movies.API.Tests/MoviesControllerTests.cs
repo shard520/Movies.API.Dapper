@@ -19,6 +19,44 @@ namespace Movies.API.Tests
         }
 
         [Test]
+        public async Task When_AddNewMovie_Then_ReturnOkResponseWithId()
+        {
+            // Arrange
+            var movieDTO = It.IsAny<MovieDTO>();
+            var expectedResult = 1;
+            _unitOfWork.Setup(x => x.Movies.AddAsync(movieDTO))
+                .ReturnsAsync(expectedResult);
+
+            // Act
+            var subject = await _controller.Add(movieDTO);
+            var okResult = subject as OkObjectResult;
+
+            // Assert
+            okResult.StatusCode.Should().Be(200);
+            okResult.Value.Should().Be(expectedResult);
+        }
+
+        [Test]
+        public async Task When_AddExistingMovie_Then_ReturnConflictWithNameInMessage()
+        {
+            // Arrange
+            var movieDTO = Mock.Of<MovieDTO>();
+            movieDTO.MovieName = It.IsAny<string>();
+            var existingId = It.IsAny<int>();
+            var expectedMessage = $"A movie with the name \"{movieDTO.MovieName}\" already exists with an id of {existingId}. Please update the existing movie.";
+            _unitOfWork.Setup(x => x.Movies.AddAsync(movieDTO))
+                .ThrowsAsync(new Exception ($"{existingId}"));
+
+            // Act
+            var subject = await _controller.Add(movieDTO);
+            var conflictResult = subject as ConflictObjectResult;
+
+            // Assert
+            conflictResult.StatusCode.Should().Be(409);
+            conflictResult.Value.Should().Be(expectedMessage);
+        }
+
+        [Test]
         public async Task When_GetAll_Then_ReturnOkResponseWithListOfMovies()
         {
             // Arrange
@@ -59,10 +97,11 @@ namespace Movies.API.Tests
         }
 
         [Test]
-        public async Task When_GetByIdWithInvalidId_Then_ReturnNotFoundResponse()
+        public async Task When_GetByIdWithInvalidId_Then_ReturnNotFoundResponseWithIdInMessage()
         {
             // Arrange
             var invalidId = It.IsAny<int>();
+            var expectedMessage = $"Movie with id {invalidId} not found.";
             _unitOfWork.Setup(x => x.Movies.GetByIdAsync(invalidId))
                 .ReturnsAsync(null as MovieDTO);
 
@@ -71,26 +110,44 @@ namespace Movies.API.Tests
             var result = subject as NotFoundObjectResult;
             
             // Assert
-            result.Should().BeOfType<NotFoundObjectResult>();
             result.StatusCode.Should().Be(404);
+            result.Value.Should().Be(expectedMessage);
         }
 
         [Test]
-        public async Task When_Add_Then_ReturnOkResponseWithInt1()
+        public async Task When_Update_Then_ReturnOkResponseWithUpdatedMovie()
         {
             // Arrange
-            var movieDTO = It.IsAny<MovieDTO>();
-            var expectedResult = 1;
-            _unitOfWork.Setup(x => x.Movies.AddAsync(movieDTO))
+            var movieDTO = Mock.Of<MovieDTO>();
+            var expectedResult = movieDTO;
+            _unitOfWork.Setup(x => x.Movies.UpdateAsync(movieDTO))
                 .ReturnsAsync(expectedResult);
 
             // Act
-            var subject = await _controller.Add(movieDTO);
+            var subject = await _controller.Update(movieDTO);
             var okResult = subject as OkObjectResult;
 
             // Assert
             okResult.StatusCode.Should().Be(200);
             okResult.Value.Should().Be(expectedResult);
+        }
+
+        [Test]
+        public async Task When_UpdateNonExistingMovie_Then_ReturnNotFoundResponseWithMessage()
+        {
+            // Arrange
+            var movieDTO = Mock.Of<MovieDTO>();
+            var expectedMessage = "Update operation was unsuccesful, please check the id supplied is valid.";
+            _unitOfWork.Setup(x => x.Movies.UpdateAsync(movieDTO))
+                .ReturnsAsync(null as MovieDTO);
+
+            // Act
+            var subject = await _controller.Update(movieDTO);
+            var notFoundResult = subject as NotFoundObjectResult;
+
+            // Assert
+            notFoundResult.StatusCode.Should().Be(404);
+            notFoundResult.Value.Should().Be(expectedMessage);
         }
 
         [Test]
@@ -112,21 +169,22 @@ namespace Movies.API.Tests
         }
 
         [Test]
-        public async Task When_Update_Then_ReturnOkResponseWithUpdatedMovie()
+        public async Task When_DeleteNonExistingMovie_Then_ReturnNotFoundResponseWithMessage()
         {
             // Arrange
-            var movieDTO = Mock.Of<MovieDTO>();
-            var expectedResult = movieDTO;
-            _unitOfWork.Setup(x => x.Movies.UpdateAsync(movieDTO))
-                .ReturnsAsync(expectedResult);
+            var id = It.IsAny<int>();
+            var failedDeleteCode = 0;
+            var expectedMessage = "Delete operation was unsuccesful, please check the id supplied is valid.";
+            _unitOfWork.Setup(x => x.Movies.DeleteAsync(id))
+                .ReturnsAsync(failedDeleteCode);
 
             // Act
-            var subject = await _controller.Update(movieDTO);
-            var okResult = subject as OkObjectResult;
+            var subject = await _controller.Delete(id);
+            var notFoundResult = subject as NotFoundObjectResult;
 
             // Assert
-            okResult.StatusCode.Should().Be(200);
-            okResult.Value.Should().Be(expectedResult);
+            notFoundResult.StatusCode.Should().Be(404);
+            notFoundResult.Value.Should().Be(expectedMessage);
         }
     }
 }

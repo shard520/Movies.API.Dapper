@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using Movies.API.Infrastructure;
 using Serilog;
 
@@ -33,3 +34,7 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
+
+[ExcludeFromCodeCoverage]
+public partial class Program
+{ }
